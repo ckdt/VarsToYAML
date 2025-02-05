@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export Variables</title>
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background-color: #f3f3f3;
+    }
+
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .checkbox-list {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      background-color: #fff;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .checkbox-item:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    button {
+      display: inline-block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      background-color: #18a0fb;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #007adf;
+    }
+
+    button.secondary {
+      background-color: #e0e0e0;
+      color: #333333;
+    }
+
+    button.secondary:hover {
+      background-color: #d6d6d6;
+    }
+
+    .output-container {
+      position: relative;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-radius: 8px;
+      background-color: #ffffff;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #999;
+      transition: color 0.2s ease;
+      z-index: 10;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .copy-btn:hover {
+      color: #18a0fb;
+      background-color: rgba(24, 160, 251, 0.1);
+    }
+
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .copy-btn.success {
+      color: #48bb78;
+    }
+
+    #copyFeedback {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    #copyFeedback.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>Export Figma Variables</h1>
+
+  <div class="section">
+    <div class="checkbox-list" id="collections">
+      <!-- Checkboxes will be dynamically inserted here -->
+    </div>
+  </div>
+
+  <div class="section">
+    <button id="exportBtn">Export Selected</button>
+    <button id="saveYamlBtn">Save YAML</button>
+    <button id="clearBtn" class="secondary">Clear Output</button>
+  </div>
+
+  <div class="section">
+    <div class="output-container">
+      <button id="copyOutputBtn" class="copy-btn" title="Copy to Clipboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 5H8C6.89543 5 6 5.89543 6 7V19C6 20.1046 6.89543 21 8 21H16C17.1046 21 18 20.1046 18 19V7C18 5.89543 17.1046 5 16 5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 3H14C14.5523 3 15 3.44772 15 4C15 4.55228 14.5523 5 14 5H10C9.44772 5 9 4.55228 9 4C9 3.44772 9.44772 3 10 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>          
+      </button>
+      <pre id="output">No output yet...</pre>
+    </div>
+  </div>
+
+  <div id="copyFeedback">Copied to clipboard!</div>
+
+  <script>
+    let collectionsList = [];
+
+    document.getElementById('exportBtn').onclick = () => {
+      const selectedCollections = Array.from(document.querySelectorAll('#collections input[type="checkbox"]:checked'))
+        .map(cb => cb.value);
+      parent.postMessage({ pluginMessage: { type: 'export-variables', collections: selectedCollections } }, '*');
+    };
+
+    document.getElementById('saveYamlBtn').onclick = () => {
+      const yamlContent = document.getElementById('output').textContent.trim();
+      if (!yamlContent || yamlContent === "No output yet...") {
+        alert("No YAML content to save!");
+        return;
+      }
+      const blob = new Blob([yamlContent], { type: 'text/yaml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'figma_variables.yaml';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+
+    document.getElementById('clearBtn').onclick = () => {
+      document.getElementById('output').textContent = 'No output yet...';
+      const checkboxes = document.querySelectorAll('#collections input[type="checkbox"]');
+      checkboxes.forEach(checkbox => checkbox.checked = false);
+    };
+
+    document.getElementById('copyOutputBtn').onclick = () => {
+      const outputText = document.getElementById('output').textContent;
+      if (!outputText || outputText === "No output yet...") {
+        alert("No content to copy!");
+        return;
+      }
+      parent.postMessage({ pluginMessage: { type: 'copy-to-clipboard', text: outputText } }, '*');
+    };
+
+    parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
+
+    onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg.type === 'collections-list') {
+        collectionsList = msg.data;
+        const collectionsDiv = document.getElementById('collections');
+        collectionsDiv.innerHTML = msg.data.map(c => `
+          <div class="checkbox-item">
+            <input type="checkbox" id="${c.id}" value="${c.id}">
+            <label for="${c.id}">${c.name}</label>
+          </div>
+        `).join('');
+        
+        const selectAllCheckbox = document.createElement('div');
+        selectAllCheckbox.className = 'checkbox-item';
+        selectAllCheckbox.innerHTML = `
+          <input type="checkbox" id="selectAll">
+          <label for="selectAll">Select All/None</label>
+        `;
+        collectionsDiv.prepend(selectAllCheckbox);
+
+        document.getElementById('selectAll').onclick = function() {
+          const checkboxes = document.querySelectorAll('#collections input[type="checkbox"]');
+          checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        };
+      } else if (msg.type === 'yaml-data') {
+        document.getElementById('output').textContent = msg.data || 'No output yet...';
+      } else if (msg.type === 'copy') {
+        const textarea = document.createElement('textarea');
+        textarea.value = msg.text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        parent.postMessage({ pluginMessage: { type: 'copyComplete' } }, '*');
+        
+        const copyBtn = document.getElementById('copyOutputBtn');
+        copyBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        `;
+        copyBtn.classList.add('success');
+        
+        const feedback = document.getElementById('copyFeedback');
+        feedback.classList.add('show');
+        setTimeout(() => {
+          feedback.classList.remove('show');
+        }, 2000);
+
+        setTimeout(() => {
+          copyBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 5H8C6.89543 5 6 5.89543 6 7V19C6 20.1046 6.89543 21 8 21H16C17.1046 21 18 20.1046 18 19V7C18 5.89543 17.1046 5 16 5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 3H14C14.5523 3 15 3.44772 15 4C15 4.55228 14.5523 5 14 5H10C9.44772 5 9 4.55228 9 4C9 3.44772 9.44772 3 10 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+          copyBtn.classList.remove('success');
+        }, 1500);
+      }
+    };
+  </script>
+</body>
+</html>

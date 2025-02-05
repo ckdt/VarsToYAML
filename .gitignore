@@ -1,0 +1,39 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+
+# macOS system files
+.DS_Store
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Figma plugin specific
+manifest.json
+
+# TypeScript compilation cache
+*.tsbuildinfo
+
+# Optional: Yarn integrity file
+.yarn-integrity
+
+# Optional: ESLint cache
+.eslintcache
